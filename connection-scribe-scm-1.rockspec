@@ -24,10 +24,5 @@ build = {
     type = 'builtin',
     modules = {
         ['connection.scribe'] = 'connection/scribe.lua';
-        ['libcnnscribe'] = {
-            sources = {
-                "libcnnscribe.c",
-            };
-        }
     }
 }
