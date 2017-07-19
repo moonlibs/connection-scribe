@@ -269,14 +269,14 @@ end
 
 function M:on_read(is_last)
 	local rbuf = bin.rbuf( self.rbuf, self.avail )
-	print("read\n"..rbuf:dump())
+	-- print("read\n"..rbuf:dump())
 	while rbuf:avail() > 4 do
 		local r,message_type,seq,body = pcall(decode_message,rbuf)
 		if not r then
 			log.error("decode failed: %s",message_type)
 		end
 		if seq then
-			print(message_type, seq, dump(body))
+			-- print(message_type, seq, dump(body))
 			if self.req[ seq ] then
 				self.req[ seq ]:put({message_type, body})
 			else
@@ -335,13 +335,13 @@ function M:_waitres( seq )
 end
 
 --[[
-scribe:log(cat,message)
-scribe:log{ cat = "category", msg = "message"}
-scribe:log{ { cat = "cat1", msg = "msg1"}, { cat = "cat2", msg = "msg2"}, ... }
+scribe:send(cat,message)
+scribe:send{ cat = "category", msg = "message"}
+scribe:send{ { cat = "cat1", msg = "msg1"}, { cat = "cat2", msg = "msg2"}, ... }
 
 ]]
 
-function M:log(...)
+function M:send(...)
 	local messages
 	if type(...) == 'table' then
 		local t = ...
@@ -404,6 +404,7 @@ function M:log(...)
 
 	-- rrr(buf:reader())
 
+print("send msg ",seq,"\n",debug.traceback())
 	self:push_write(buf:export());
 	self:flush()
 	return self:_waitres(seq)

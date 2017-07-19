@@ -45,9 +45,9 @@ fiber.create(function()
 
 	-- print("go on,", cn)
 
-	print("log1 = ", cn:log{ cat = "test cat"; msg = "my test message" } )
-	print("log2 = ", cn:log{{ cat = "test cat"; msg = "my test message" }} )
-	print("log3 = ", cn:log("test cat","my test message") )
-	print("log4 = ", cn:log({}) )
+	print("log1 = ", cn:send{ cat = "test cat"; msg = "my test message" } )
+	print("log2 = ", cn:send{{ cat = "test cat"; msg = "my test message" }} )
+	print("log3 = ", cn:send("test cat","my test message") )
+	print("log4 = ", cn:send({}) )
 
 end)
