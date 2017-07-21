@@ -403,8 +403,7 @@ function M:send(...)
 	-- print(buf:dump())
 
 	-- rrr(buf:reader())
-
-print("send msg ",seq,"\n",debug.traceback())
+	-- print("send msg ",seq,"\n",debug.traceback())
 	self:push_write(buf:export());
 	self:flush()
 	return self:_waitres(seq)
