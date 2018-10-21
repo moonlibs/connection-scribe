@@ -203,8 +203,8 @@ decode_set = function( rbuf )
 	local count = rbuf:u32be()
 	local ret = {}
 	for i = 1,count do
-		local key = decode_element(keytype, rbuf)
-		ret[key] = key
+		local val = decode_element(valtype, rbuf)
+		ret[val] = val
 	end
 	return ret
 end
@@ -369,7 +369,7 @@ function M:send(...)
 
 	sz = sz+1
 	-- print("pkt size = ",sz)
-	
+
 	local buf = bin.fixbuf(sz)
 	local hdr = ffi.cast( 'sc_hdr_t *', buf:alloc(HDR_SZ) )
 	ffi.copy(hdr,def_hdr,HDR_SZ)
