@@ -223,7 +223,11 @@ end
 
 local function decode_message(rbuf)
 	local len = rbuf:u32be()
-	if len < rbuf:avail() then return end
+	if len > rbuf:avail() then
+		-- Shift pointer back on size of 'len'
+		rbuf:skip(- ffi.sizeof('uint32_t'))
+		return
+	end
 	local next_rec = rbuf.p.c + len
 
 	local version = rbuf:u32be()
