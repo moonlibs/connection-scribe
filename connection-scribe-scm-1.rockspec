@@ -16,7 +16,7 @@ description = {
 
 dependencies = {
     'lua >= 5.1';
-    'bin >= 0';
+    'bin >= scm-3';
     'connection >= 0';
 }
 

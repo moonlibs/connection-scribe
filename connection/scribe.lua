@@ -4,7 +4,6 @@ local connection = require 'connection'
 local M = obj.class({ debug = {} },'connection.scribe',connection)
 
 local ffi = require 'ffi'
-local C = ffi.C
 local bin = require 'bin'
 
 local NULL = ffi.cast('void *',0)
@@ -24,19 +23,6 @@ local function typedef(t,def)
 		if not r then error(e,2) end
 	end
 	return ffi.typeof(t)
-end
-local function fundef(n,def,src)
-	src = src or ffi.C
-	local f = function(src,n) return src[n] end
-	if not pcall(f,src,n) then
-		local r,e = pcall(ffi.cdef,def)
-		if not r then error(e,2) end
-	end
-	local r,e = pcall(f,src,n)
-	if not r then
-		error(e,2)
-	end
-	return r
 end
 
 local VERSION_MASK = ffi.cast('uint32_t',0xffff0000)
@@ -95,7 +81,7 @@ local def_hdr = ffi.new('sc_hdr_t',{
 	size = 0;
 
 	v0 = 0x80; v1 = 1;
-	t0 = 0;	t1 = 1;
+	t0 = 0;	t1 = M_CALL;
 
 	len   = {0,0,0,3};
 	proc  = "Log";
@@ -105,10 +91,10 @@ local def_hdr = ffi.new('sc_hdr_t',{
 })
 local HDR_SZ = ffi.sizeof('sc_hdr_t')
 
-local seq = 1233
+local _seq = 1233
 function M.seq()
-	seq = seq < 0xffffffff and seq + 1 or 1
-	return seq
+	_seq = _seq < 0xffffffff and _seq + 1 or 1
+	return _seq
 end
 
 function M:_init(...)
@@ -181,7 +167,7 @@ decode_list = function( rbuf )
 	local subtype = rbuf:u8()
 	local count = rbuf:u32be()
 	local ret = {}
-	for i = 1,count do
+	for _ = 1,count do
 		table.insert(ret,decode_element(subtype, rbuf))
 	end
 	return ret
@@ -191,7 +177,7 @@ decode_map = function( rbuf )
 	local valtype = rbuf:u8()
 	local count = rbuf:u32be()
 	local ret = {}
-	for i = 1,count do
+	for _ = 1,count do
 		local key = decode_element(keytype, rbuf)
 		local val = decode_element(valtype, rbuf)
 		ret[key] = val
@@ -202,8 +188,8 @@ decode_set = function( rbuf )
 	local valtype = rbuf:u8()
 	local count = rbuf:u32be()
 	local ret = {}
-	for i = 1,count do
-		local key = decode_element(keytype, rbuf)
+	for _ = 1,count do
+		local key = decode_element(valtype, rbuf)
 		ret[key] = key
 	end
 	return ret
@@ -223,7 +209,10 @@ end
 
 local function decode_message(rbuf)
 	local len = rbuf:u32be()
-	if len < rbuf:avail() then return end
+	if rbuf:avail() < len then
+		rbuf:skip(-4)
+		return
+	end
 	local next_rec = rbuf.p.c + len
 
 	local version = rbuf:u32be()
@@ -247,7 +236,7 @@ local function decode_message(rbuf)
 		message_type = rbuf:u8()
 		seq = rbuf:u32be()
 	end
-
+	
 	if message_type > 0 and message_type < 5 then
 		local r,body = pcall(decode_struct,rbuf)
 		if not r then
@@ -269,7 +258,7 @@ end
 
 function M:on_read(is_last)
 	local rbuf = bin.rbuf( self.rbuf, self.avail )
-	-- print("read\n"..rbuf:dump())
+	-- print("read "..tostring(rbuf).."\n"..rbuf:dump())
 	while rbuf:avail() > 4 do
 		local r,message_type,seq,body = pcall(decode_message,rbuf)
 		if not r then
